@@ -25,12 +25,11 @@ public class DocumentDbRepo<T> : IDocumentDbRepo<T> where T : IEntity
     private CosmosClient _client;
     private readonly IConfiguration _config;
 
-    public DocumentDbRepo( IConfiguration config)
+    public DocumentDbRepo( IConfiguration config, CosmosClient cosmosClient)
     {
         _config = config;
-        var cosmosConnStr = _config.GetConnectionString("CosmosDb"); 
+        _client = cosmosClient;
         _databaseId = _config.GetValue<string>("CosmosDb:DatabaseId");
-        _client = new CosmosClient(cosmosConnStr);
     }
 
     public async Task<List<T>> QueryItemsAsync(Expression<Func<T, bool>> filterFunc, Expression<Func<T, T>> selectFunc)

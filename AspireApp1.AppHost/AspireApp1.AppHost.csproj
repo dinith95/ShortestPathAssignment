@@ -16,8 +16,6 @@
 
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.AppHost" Version="8.0.0" />
-    <PackageReference Include="Aspire.Hosting.Azure.CosmosDB" Version="8.0.2" />
-    <PackageReference Include="Aspire.Microsoft.Azure.Cosmos" Version="8.0.2" />
   </ItemGroup>
 
   <ItemGroup>
