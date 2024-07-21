@@ -8,16 +8,24 @@ namespace AspireApp1.ApiService.Controllers;
 [Route("api/[controller]")]
 public class DistanceController : ControllerBase
 {
-    private readonly DistanceCalculatorService _distanceCalculatorService;
-    public DistanceController()
+    private readonly IDistanceCalculatorService _distanceCalculatorService;
+    public DistanceController(IDistanceCalculatorService distanceCalculatorService)
     {
-        _distanceCalculatorService = new DistanceCalculatorService();
+       _distanceCalculatorService = distanceCalculatorService;
     }
 
     [HttpGet()]
     public IActionResult GetShortestPath([FromQuery] string source, [FromQuery] string dest)
     {
-        var dto = _distanceCalculatorService.FindShortestPath(source, dest);
-        return Ok(dto);
+        try
+        {
+            var dto = _distanceCalculatorService.FindShortestPath(source, dest);
+            return Ok(dto);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        }
+       
     }
 }

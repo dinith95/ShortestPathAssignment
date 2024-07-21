@@ -5,40 +5,52 @@ namespace AspireApp1.ApiService.Services;
 
 public interface IDistanceCalculatorService
 {
-    DistanceDto FindShortestPath(string source, string dest);
+    Task<DistanceDto> FindShortestPath(string source, string dest);
 }
 
 public class DistanceCalculatorService : IDistanceCalculatorService
 {
     private readonly Graph _graph;
+    
+    private readonly IDocumentDbService _documentDbService;
 
-    public DistanceCalculatorService()
+    public DistanceCalculatorService(IDocumentDbService documentDbService)
     {
         _graph = PopulateGraph();
+        _documentDbService = documentDbService;
     }
 
-    public DistanceDto FindShortestPath(string source, string dest)
+    public async Task<DistanceDto> FindShortestPath(string source, string dest)
     {
-        var sourceNode = _graph.Nodes.FirstOrDefault(n => n.Name == source);
-        var destNode = _graph.Nodes.FirstOrDefault(n => n.Name == dest);
-
-        Dictionary<string, int> distanceTable = _graph.Nodes.ToDictionary(n => n.Name, n => int.MaxValue);
-
-        // set source distance to 0
-        distanceTable[source] = 0;
-
-        VisitNode(sourceNode, distanceTable);
-
-        // get minimum distance node
-        var minNode = GetMinimumDistanceNode(distanceTable);
-
-        while (minNode != null)
+        try
         {
-            VisitNode(minNode, distanceTable);
-            minNode = GetMinimumDistanceNode(distanceTable);
+            var nodes = await _documentDbService.GetNodesInGraph(Constants.Graph01);
+            var sourceNode = nodes.FirstOrDefault(n => n.Name == source);
+            var destNode = nodes.FirstOrDefault(n => n.Name == dest);
+            Dictionary<string, int> distanceTable = nodes.ToDictionary(n => n.Name, n => int.MaxValue);
+
+            // set source distance to 0
+            distanceTable[source] = 0;
+
+            await VisitNode(sourceNode, distanceTable);
+
+            // get minimum distance node
+            var minNode = GetMinimumDistanceNode(nodes, distanceTable);
+
+            while (minNode != null)
+            {
+                await VisitNode(minNode, distanceTable);
+                minNode = GetMinimumDistanceNode(nodes, distanceTable);
+            }
+            var shortestPath = GetPathDestination(dest);
+            return new DistanceDto(shortestPath, distanceTable[dest]);
         }
-        var shortestPath = GetPathDestination(dest);
-        return new DistanceDto(shortestPath, distanceTable[dest]);
+        catch (Exception ex)
+        {
+
+            throw;
+        }
+       
 
     }
 
@@ -55,8 +67,9 @@ public class DistanceCalculatorService : IDistanceCalculatorService
         return paths.Reverse<string>().ToList();
     }
 
-    private void VisitNode(Node node, Dictionary<string, int> distanceTable)
+    private async Task VisitNode(Node node, Dictionary<string, int> distanceTable)
     {
+        node.Edges = await _documentDbService.GetEdgesInGraphForNode(Constants.Graph01, node.Name);
         foreach (var edge in node.Edges)
         {
             var nextNode = edge.Destination;
@@ -75,11 +88,11 @@ public class DistanceCalculatorService : IDistanceCalculatorService
         node.Visited = true;
     }
 
-    private Node GetMinimumDistanceNode(Dictionary<string, int> distanceTable)
+    private Node GetMinimumDistanceNode(List<Node> nodes, Dictionary<string, int> distanceTable)
     {
         var minDistance = int.MaxValue;
         Node minNode = null;
-        foreach (var node in _graph.Nodes)
+        foreach (var node in nodes)
         {
             if (distanceTable[node.Name] < minDistance && !node.Visited)
             {
@@ -89,6 +102,8 @@ public class DistanceCalculatorService : IDistanceCalculatorService
         }
         return minNode;
     }
+
+
 
     private Graph PopulateGraph()
     {
