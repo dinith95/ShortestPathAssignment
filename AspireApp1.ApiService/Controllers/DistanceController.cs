@@ -1,6 +1,7 @@
 ﻿using AspireApp1.ApiService.Models;
+using AspireApp1.ApiService.Services;
 using Microsoft.AspNetCore.Mvc;
-namespace AspireApp1.ApiService;
+namespace AspireApp1.ApiService.Controllers;
 
 
 [ApiController]
@@ -16,7 +17,7 @@ public class DistanceController : ControllerBase
     [HttpGet()]
     public IActionResult GetShortestPath([FromQuery] string source, [FromQuery] string dest)
     {
-        var distance = _distanceCalculatorService.FindShortestPath(source, dest);
-        return Ok(new DistanceDto(source,dest,distance));
-    }  
+        var dto = _distanceCalculatorService.FindShortestPath(source, dest);
+        return Ok(dto);
+    }
 }
