@@ -15,11 +15,11 @@ public class DistanceController : ControllerBase
     }
 
     [HttpGet()]
-    public IActionResult GetShortestPath([FromQuery] string source, [FromQuery] string dest)
+    public async Task<IActionResult> GetShortestPath([FromQuery] string source, [FromQuery] string dest)
     {
         try
         {
-            var dto = _distanceCalculatorService.FindShortestPath(source, dest);
+            var dto = await _distanceCalculatorService.FindShortestPath(source, dest);
             return Ok(dto);
         }
         catch (Exception ex)

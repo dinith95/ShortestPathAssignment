@@ -5,7 +5,7 @@ namespace AspireApp1.ApiService.Services;
 
 public interface IDocumentDbService
 {
-    Task<List<Models.Edge>> GetEdgesInGraphForNode(string graph, string node);
+    Task<List<Edge>> GetEdgesInGraphForNode(string graph, string node);
     Task<List<Models.Node>> GetNodesInGraph(string graph);
 
 }
@@ -32,14 +32,14 @@ public class DocumentDbService: IDocumentDbService
                 .ToList();
     }
 
-    public async Task<List<Models.Edge>> GetEdgesInGraphForNode(string graph, string node)
+    public async Task<List<Edge>> GetEdgesInGraphForNode(string graph, string node)
     {
         Expression<Func<Edge, bool>> filter = edge => edge.Type == graph && edge.Source == node ;
         Expression<Func<Edge, Edge>> select = edge => edge;
 
         var edges = await _edgeRepo.QueryItemsAsync(filter, select);
 
-        return edges.Select(e => GetEdgeNode(e)).ToList();
+        return edges;
     }
 
     private Models.Edge GetEdgeNode(Edge edge)
