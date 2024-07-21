@@ -7,6 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add service defaults & Aspire components.
 builder.AddServiceDefaults();
+//builder.AddAzureCosmosClient("cosmosConnectionName");
 
 // Add services to the container.
 builder.Services.AddProblemDetails();
@@ -15,8 +16,8 @@ builder.Services.AddControllers();
 
 builder.Services.AddScoped<IDistanceCalculatorService, DistanceCalculatorService>();
 builder.Services.AddScoped<IDocumentDbService, DocumentDbService>();
-builder.Services.AddScoped<IDocumentDbRepo<Node>, DocumentDbRepo<Node>>(); 
-builder.Services.AddScoped<IDocumentDbRepo<Edge>, DocumentDbRepo<Edge>>();
+builder.Services.AddSingleton<IDocumentDbRepo<Node>, DocumentDbRepo<Node>>(); 
+builder.Services.AddSingleton<IDocumentDbRepo<Edge>, DocumentDbRepo<Edge>>();
 
 var app = builder.Build();
 

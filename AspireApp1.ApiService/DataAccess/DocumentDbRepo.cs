@@ -23,12 +23,14 @@ public class DocumentDbRepo<T> : IDocumentDbRepo<T> where T : IEntity
 
     private readonly string _databaseId;
     private CosmosClient _client;
+    private readonly IConfiguration _config;
 
-    public DocumentDbRepo()
+    public DocumentDbRepo( IConfiguration config)
     {
-        string connStr = "AccountEndpoint=https://shortest-route.documents.azure.com:443/;AccountKey=uz3uutdZIr2Nw4QQd0O3il3AjPuXrPEyuiBdE3aWRtoXqkfgkHESzSemEBgtDxBKmXJAlEWv9o8dACDbBbHOtQ==;";
-        _databaseId = "shortestRouteDb";
-        _client = new CosmosClient(connStr);
+        _config = config;
+        var cosmosConnStr = _config.GetConnectionString("CosmosDb"); 
+        _databaseId = _config.GetValue<string>("CosmosDb:DatabaseId");
+        _client = new CosmosClient(cosmosConnStr);
     }
 
     public async Task<List<T>> QueryItemsAsync(Expression<Func<T, bool>> filterFunc, Expression<Func<T, T>> selectFunc)

@@ -1,7 +1,4 @@
-﻿using AspireApp1.ApiService.DataAccess;
-using System.Reflection.PortableExecutable;
-
-namespace AspireApp1.ApiService.Models;
+﻿namespace AspireApp1.ApiService.Models;
 
 
 public record Node (string Name)
