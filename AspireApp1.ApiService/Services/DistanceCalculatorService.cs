@@ -34,17 +34,14 @@ public class DistanceCalculatorService : IDistanceCalculatorService
         }  
         else
         {
+            await PopulateNodes();
             distanceDto = await GetFromDocumentDb(source, dest);
-            await _rediCachingService.AddToRedisCache(source, dest, distanceDto);
         }
         return distanceDto;
     }
 
     private async Task<DistanceDto> GetFromDocumentDb(string source, string dest)
     {
-
-        _nodes.AddRange( await _documentDbService.GetNodesInGraph(Constants.Graph01));
-
         var sourceNode = _nodes.FirstOrDefault(n => n.Name == source);
         var destNode = _nodes.FirstOrDefault(n => n.Name == dest);
         Dictionary<string, int> distanceTable = _nodes.ToDictionary(n => n.Name, n => int.MaxValue);
@@ -62,6 +59,7 @@ public class DistanceCalculatorService : IDistanceCalculatorService
             await VisitNode(minNode, distanceTable);
             minNode = GetMinimumDistanceNode(distanceTable);
         }
+        await AddShortestPathsToRedis(source, distanceTable);
         var shortestPath = GetPathDestination(dest);
         return new DistanceDto(shortestPath, distanceTable[dest]);
     }
@@ -106,6 +104,19 @@ public class DistanceCalculatorService : IDistanceCalculatorService
         node.Visited = true;
     }
 
+    private async Task AddShortestPathsToRedis(string source, Dictionary<string,int> distanceTable)
+    {
+        foreach (var node in _nodes)
+        {
+            if(node.Name == source)
+                continue;
+            var shortestPath = GetPathDestination(node.Name);
+            var distance = distanceTable[node.Name];
+            var distanceDto = new DistanceDto(shortestPath, distance);
+            await _rediCachingService.AddToRedisCache(source, node.Name, distanceDto);
+        }
+    }
+
     private Node GetMinimumDistanceNode( Dictionary<string, int> distanceTable)
     {
         var minDistance = int.MaxValue;
@@ -120,4 +131,7 @@ public class DistanceCalculatorService : IDistanceCalculatorService
         }
         return minNode;
     }
+
+    private async  Task PopulateNodes() =>
+            _nodes.AddRange(await _documentDbService.GetNodesInGraph(Constants.Graph01));
 }
