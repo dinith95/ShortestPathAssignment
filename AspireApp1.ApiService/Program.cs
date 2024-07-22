@@ -5,6 +5,9 @@ using Microsoft.AspNetCore.Mvc;
 [assembly: ApiController]
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+
 // Add service defaults & Aspire components.
 builder.AddServiceDefaults();
 builder.AddRedisClient("RouteCache");

@@ -16,24 +16,32 @@ public class DistanceCalculatorService : IDistanceCalculatorService
     private readonly IDocumentDbService _documentDbService;
     private readonly IRediCachingService _rediCachingService;
     private readonly List<Node> _nodes;
+    private readonly ILogger<DistanceCalculatorService> _logger;
 
-    public DistanceCalculatorService(IDocumentDbService documentDbService,  IRediCachingService rediCachingService)
+    public DistanceCalculatorService(
+        IDocumentDbService documentDbService, 
+        IRediCachingService rediCachingService, 
+        ILogger<DistanceCalculatorService> logger)
     {
         _documentDbService = documentDbService;
         _nodes = new List<Node>();
         _rediCachingService = rediCachingService;
+        _logger = logger;
     }
 
     public async Task<DistanceDto> FindShortestPath(string source, string dest)
     {
+        _logger.LogInformation("Finding shortest path between {source} and {dest}", source, dest);
         DistanceDto distanceDto;
         var cacheVal = await _rediCachingService.CheckInRedisCache(source, dest);
         if (cacheVal != null)
         {
+            _logger.LogInformation("value is present in cache : retuning that value");
             distanceDto = cacheVal;
         }  
         else
         {
+            _logger.LogInformation("value is not present in cache : calculating the value");
             await PopulateNodes();
             distanceDto = await GetFromDocumentDb(source, dest);
         }
@@ -59,7 +67,10 @@ public class DistanceCalculatorService : IDistanceCalculatorService
             await VisitNode(minNode, distanceTable);
             minNode = GetMinimumDistanceNode(distanceTable);
         }
+        _logger.LogInformation("Shortest path calculated length : {length}", distanceTable[dest]);
+        _logger.LogInformation("Adding shortest paths to cache");
         await AddShortestPathsToRedis(source, distanceTable);
+        _logger.LogInformation("Shortest paths added to cache");
         var shortestPath = GetPathDestination(dest);
         return new DistanceDto(shortestPath, distanceTable[dest]);
     }
