@@ -9,9 +9,11 @@ namespace AspireApp1.ApiService.Controllers;
 public class DistanceController : ControllerBase
 {
     private readonly IDistanceCalculatorService _distanceCalculatorService;
-    public DistanceController(IDistanceCalculatorService distanceCalculatorService)
+    private readonly ILogger<DistanceController> _logger;
+    public DistanceController(IDistanceCalculatorService distanceCalculatorService, ILogger<DistanceController> logger)
     {
-       _distanceCalculatorService = distanceCalculatorService;
+        _distanceCalculatorService = distanceCalculatorService;
+        _logger = logger;
     }
 
     [HttpGet()]
@@ -24,6 +26,7 @@ public class DistanceController : ControllerBase
         }
         catch (Exception ex)
         {
+            _logger.LogError("Error while finding shortest path, ex: {ex}." , ex);
             return BadRequest(ex.Message);
         }
        
