@@ -1,6 +1,10 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
-var apiService = builder.AddProject<Projects.AspireApp1_ApiService>("apiservice");  
+//var redis = builder.AddRedis("redis");
+//redis.WithEndpoint("localhost", e => e.TargetPort = 6369);
+
+var apiService = builder.AddProject<Projects.AspireApp1_ApiService>("apiservice");
+                                               // .WithReference(redis);
 
 builder.AddProject<Projects.AspireApp1_Web>("webfrontend")
     .WithExternalHttpEndpoints()

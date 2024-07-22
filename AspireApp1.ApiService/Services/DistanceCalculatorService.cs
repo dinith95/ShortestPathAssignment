@@ -1,5 +1,8 @@
 ﻿using AspireApp1.ApiService.Dto;
 using AspireApp1.ApiService.Models;
+using StackExchange.Redis;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace AspireApp1.ApiService.Services;
 
@@ -11,15 +14,33 @@ public interface IDistanceCalculatorService
 public class DistanceCalculatorService : IDistanceCalculatorService
 {
     private readonly IDocumentDbService _documentDbService;
+    private readonly IRediCachingService _rediCachingService;
     private readonly List<Node> _nodes;
 
-    public DistanceCalculatorService(IDocumentDbService documentDbService)
+    public DistanceCalculatorService(IDocumentDbService documentDbService,  IRediCachingService rediCachingService)
     {
         _documentDbService = documentDbService;
         _nodes = new List<Node>();
+        _rediCachingService = rediCachingService;
     }
 
     public async Task<DistanceDto> FindShortestPath(string source, string dest)
+    {
+        DistanceDto distanceDto;
+        var cacheVal = await _rediCachingService.CheckInRedisCache(source, dest);
+        if (cacheVal != null)
+        {
+            distanceDto = cacheVal;
+        }  
+        else
+        {
+            distanceDto = await GetFromDocumentDb(source, dest);
+            await _rediCachingService.AddToRedisCache(source, dest, distanceDto);
+        }
+        return distanceDto;
+    }
+
+    private async Task<DistanceDto> GetFromDocumentDb(string source, string dest)
     {
 
         _nodes.AddRange( await _documentDbService.GetNodesInGraph(Constants.Graph01));
